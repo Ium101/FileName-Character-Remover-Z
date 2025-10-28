@@ -208,13 +208,3 @@ Sempre faça backup dos seus arquivos antes de realizar operações de renomeaç
 ### 📞 Suporte
 
 Para problemas, questões ou sugestões, por favor abra uma issue no GitHub.
-
----
-
-<div align="center">
-
-Made with ❤️ for safe and easy file management
-
-Feito com ❤️ para gerenciamento de arquivos seguro e fácil
-
-</div>
