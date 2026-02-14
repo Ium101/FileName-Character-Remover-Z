@@ -3,6 +3,13 @@ from tkinter import filedialog, messagebox
 import os
 import re
 
+# DPI awareness fix for Windows high-DPI screens
+try:
+    import ctypes
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # SYSTEM_AWARE
+except Exception:
+    pass
+
 class CustomCharacterRemover:
     def __init__(self, root):
         self.root = root
@@ -10,6 +17,12 @@ class CustomCharacterRemover:
         self.root.geometry("900x650")
         self.files = []
         self.base_folder = None
+
+        # Scaling fix for Tkinter widgets
+        try:
+            self.root.tk.call('tk', 'scaling', 1.5)
+        except Exception:
+            pass
         
         # BIG WARNING
         warning_frame = tk.Frame(root, bg="yellow", pady=10)
@@ -38,26 +51,24 @@ class CustomCharacterRemover:
         tk.Label(input_frame, text="← Enter any characters: letters, numbers, symbols (e.g., []abc123 )", 
                 font=("Arial", 9), fg="gray").pack(side=tk.LEFT, padx=5)
         
-        # Test mode checkbox
-        self.test_mode = tk.BooleanVar(value=True)
-        test_frame = tk.Frame(root)
-        test_frame.pack(pady=5)
-        tk.Checkbutton(test_frame, text="TEST MODE (shows what will happen, doesn't rename)", 
-                      variable=self.test_mode, font=("Arial", 11, "bold"), 
-                      fg="green").pack()
+        # Case sensitivity checkbox
+        self.case_sensitive = tk.BooleanVar(value=True)
+        case_frame = tk.Frame(root)
+        case_frame.pack(pady=5)
+        tk.Checkbutton(case_frame, text="Case-sensitive enabled (match 'A' and 'a')", 
+                  variable=self.case_sensitive, font=("Arial", 11, "bold"), 
+                  fg="blue").pack()
         
         # Buttons frame
         btn_frame = tk.Frame(root)
         btn_frame.pack(pady=10)
         
-        tk.Button(btn_frame, text="1. Select Folder", command=self.select_folder, 
-                 bg="#007ACC", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="2. Scan Files", command=self.scan_files,
-                 bg="#17A2B8", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="3. Preview Changes", command=self.preview_changes,
-                 bg="#FFA500", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
-        tk.Button(btn_frame, text="4. RENAME FILES", command=self.rename_files,
-                 bg="#DC3545", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Select Folder", command=self.select_folder, 
+             bg="#007ACC", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="Select File", command=self.select_file, 
+             bg="#17A2B8", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
+        tk.Button(btn_frame, text="RENAME FILES", command=self.rename_files,
+             bg="#DC3545", fg="white", padx=20, pady=8, font=("Arial", 10, "bold")).pack(side=tk.LEFT, padx=5)
         
         # File list
         list_label = tk.Label(root, text="Files that will be renamed:", font=("Arial", 10, "bold"))
@@ -83,106 +94,113 @@ class CustomCharacterRemover:
         folder = filedialog.askdirectory(title="Select Folder")
         if not folder:
             return
-            
         self.base_folder = folder
         self.status.config(
-            text=f"Selected: {folder}\nClick 'Scan Files' to find files with those characters.",
+            text=f"Selected folder: {folder}\nScanning for files...",
             fg="blue"
+        )
+        self.scan_files()
+
+    def select_file(self):
+        file_path = filedialog.askopenfilename(title="Select File")
+        if not file_path:
+            return
+        self.base_folder = None
+        self.files = []
+        self.file_listbox.delete(0, tk.END)
+        substring_to_remove = self.char_entry.get()
+        if not substring_to_remove:
+            messagebox.showwarning("No Characters", "Please enter the exact substring to remove")
+            return
+        file = os.path.basename(file_path)
+        match_found = False
+        if self.case_sensitive.get():
+            if substring_to_remove in file:
+                new_name = file.replace(substring_to_remove, "")
+                match_found = new_name != file
+        else:
+            lower_file = file.lower()
+            lower_sub = substring_to_remove.lower()
+            if lower_sub in lower_file:
+                # Replace all case-insensitive matches
+                import re
+                pattern = re.compile(re.escape(substring_to_remove), re.IGNORECASE)
+                new_name = pattern.sub("", file)
+                match_found = new_name != file
+        if match_found:
+            self.files.append((file_path, file, new_name))
+            self.file_listbox.insert(tk.END, f"{file}  →  {new_name}")
+            self.status.config(
+                text=f"Found 1 file to rename.",
+                fg="blue"
+            )
+            return
+        self.status.config(
+            text=f"✅ No files found with substring: {substring_to_remove}",
+            fg="green"
         )
     
     def scan_files(self):
         if not self.base_folder:
             messagebox.showwarning("No Folder", "Please select a folder first")
             return
-        
-        chars_to_remove = self.char_entry.get()
-        if not chars_to_remove:
-            messagebox.showwarning("No Characters", "Please enter characters to remove")
+        substring_to_remove = self.char_entry.get()
+        if not substring_to_remove:
+            messagebox.showwarning("No Characters", "Please enter the exact substring to remove")
             return
-        
         self.files = []
         self.file_listbox.delete(0, tk.END)
-        
-        # Escape special regex characters for safety
-        chars_pattern = re.escape(chars_to_remove)
-        
-        # Scan for files with those characters
         found_count = 0
-        for root, dirs, files in os.walk(self.base_folder):
-            for file in files:
-                # Check if any of the characters are in the filename
-                if any(char in file for char in chars_to_remove):
-                    full_path = os.path.join(root, file)
-                    # Remove all specified characters
-                    new_name = file
-                    for char in chars_to_remove:
-                        new_name = new_name.replace(char, '')
-                    
-                    # Only add if name actually changes
-                    if new_name != file:
+        try:
+            for file in os.listdir(self.base_folder):
+                full_path = os.path.join(self.base_folder, file)
+                if os.path.isfile(full_path):
+                    match_found = False
+                    if self.case_sensitive.get():
+                        if substring_to_remove in file:
+                            new_name = file.replace(substring_to_remove, "")
+                            match_found = new_name != file
+                    else:
+                        lower_file = file.lower()
+                        lower_sub = substring_to_remove.lower()
+                        if lower_sub in lower_file:
+                            import re
+                            pattern = re.compile(re.escape(substring_to_remove), re.IGNORECASE)
+                            new_name = pattern.sub("", file)
+                            match_found = new_name != file
+                    if match_found:
                         self.files.append((full_path, file, new_name))
                         self.file_listbox.insert(tk.END, f"{file}  →  {new_name}")
                         found_count += 1
-        
+        except Exception as e:
+            messagebox.showerror("Error", f"Error scanning folder: {str(e)}")
+            return
         if found_count == 0:
             self.status.config(
-                text=f"✅ No files found with characters: {chars_to_remove}", 
+                text=f"✅ No files found with substring: {substring_to_remove}",
                 fg="green"
             )
-            messagebox.showinfo("No Files", f"No files with those characters were found.")
         else:
             self.status.config(
-                text=f"Found {found_count} files to rename. Click 'Preview Changes' to verify.",
+                text=f"Found {found_count} files to rename.",
                 fg="blue"
             )
     
-    def preview_changes(self):
-        if not self.files:
-            messagebox.showwarning("No Files", "Please scan for files first")
-            return
-        
-        chars_to_remove = self.char_entry.get()
-        preview_msg = f"PREVIEW: Removing characters: {chars_to_remove}\n"
-        preview_msg += f"This will rename {len(self.files)} files\n\n"
-        preview_msg += "Examples (first 10):\n"
-        preview_msg += "="*70 + "\n"
-        
-        for i, (full_path, old_name, new_name) in enumerate(self.files[:10]):
-            preview_msg += f"\n{old_name}\n  → {new_name}\n"
-        
-        if len(self.files) > 10:
-            preview_msg += f"\n... and {len(self.files) - 10} more files\n"
-        
-        preview_msg += "\n" + "="*70 + "\n"
-        preview_msg += "\n⚠️ THIS ONLY RENAMES FILES - NO FILE CONTENTS ARE TOUCHED\n"
-        preview_msg += "Method used: os.rename() - safest Python rename function\n"
-        
-        messagebox.showinfo("Preview", preview_msg)
-        self.status.config(
-            text=f"Preview ready! Uncheck 'TEST MODE' and click 'RENAME FILES' to proceed.",
-            fg="orange"
-        )
+    # Removed preview_changes method
     
     def rename_files(self):
         if not self.files:
             messagebox.showwarning("No Files", "Please scan for files first")
             return
         
-        if self.test_mode.get():
-            messagebox.showinfo(
-                "Test Mode Active",
-                "TEST MODE is ON - no files will be renamed.\n\n"
-                "Uncheck 'TEST MODE' to actually rename files."
-            )
-            return
         
-        chars_to_remove = self.char_entry.get()
+        substring_to_remove = self.char_entry.get()
         
         # Final confirmation
         confirm = messagebox.askyesno(
             "FINAL CONFIRMATION",
             f"This will RENAME {len(self.files)} files.\n"
-            f"Removing characters: {chars_to_remove}\n\n"
+            f"Removing exact substring: '{substring_to_remove}'\n\n"
             "⚠️ Make sure you have BACKUPS first!\n\n"
             "This action ONLY renames files - it does NOT modify file contents.\n\n"
             "Continue?"
