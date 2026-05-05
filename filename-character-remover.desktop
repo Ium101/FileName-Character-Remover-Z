@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Filename Character Remover
+Comment=Remove custom characters from filenames
+Exec=/mnt/Disco_Local1/Codes/Filename-Character-Remover-Z/filename-character-remover-z-linux.py
+Icon=python
+Terminal=false
+Categories=Utility;FileTools;
+StartupNotify=false
