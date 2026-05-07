@@ -18,7 +18,7 @@
 
 ### Overview
 
-A safe and simple GUI tool to remove specific characters from filenames in bulk.
+A safe and simple **cross-platform GUI tool** to remove specific characters from filenames in bulk. Works on Windows, macOS, and Linux with the same user experience.
 
 ### ⚠️ Important Notice
 
@@ -35,13 +35,17 @@ This application uses `os.rename()` which only changes filenames in the file sys
 - ✅ Shows before/after preview for each file
 - 🚫 Prevents overwriting existing files
 - 📝 Detailed error reporting
+- 💻 **Cross-platform:** Windows, macOS, Linux with identical GUI
 
 ### 🚀 Quick Start
 
 #### Requirements
 
-- Python 3.6 or higher
-- tkinter (included with Python)
+- **Python 3.6 or higher** (required for source code)
+- **tkinter** (included with Python on Windows, install on Linux/macOS):
+  - **macOS:** Usually included with Python
+  - **Linux:** `sudo apt-get install python3-tk` (Debian/Ubuntu) or equivalent for your distro
+  - **Windows:** Included with Python
 
 #### Installation
 
@@ -52,20 +56,38 @@ cd custom-character-remover
 ```
 
 2. Run the application:
+
+**Windows & macOS:**
 ```bash
 python filename-character-remover-z.py
 ```
 
-#### Building Executable
-
-To create a standalone executable:
-
+**Linux:**
 ```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed filename-character-remover-z.py
+python3 filename-character-remover-z.py
 ```
 
-The executable will be in the `dist` folder.
+Or use the built executables (see Building Executable section)
+
+#### Building Executable
+
+**Windows:**
+```bash
+build.bat
+```
+
+**Linux & macOS:**
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+The standalone executable will be created in the `dist` folder with everything bundled inside - no additional files needed!
+
+**Platform-specific outputs:**
+- **Windows:** `dist\filename-character-remover-z.exe`
+- **macOS:** `dist/filename-character-remover-z.app` (double-click to run)
+- **Linux:** `dist/filename-character-remover-z` (run in terminal or double-click if configured)
 
 ### 📖 Usage
 

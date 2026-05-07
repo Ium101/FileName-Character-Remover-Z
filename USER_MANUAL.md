@@ -14,11 +14,39 @@
 
 #### Installation
 
-**Python:** `python filename-character-remover-z.py`
+**Python (All Platforms):**
+```bash
+python3 filename-character-remover-z.py
+```
 
-**Windows Executable:** Just double-click the `.exe` file
+**Windows Executable:**
+- Just double-click the `.exe` file (single standalone executable, no additional files needed)
+- Build: `build.bat`
 
-**Build Executable:**
+**macOS Application:**
+- Double-click `filename-character-remover-z.app` in the dist folder
+- Or run: `open dist/filename-character-remover-z.app`
+- Build: `./build.sh`
+
+**Linux Executable:**
+- Run in terminal: `./dist/filename-character-remover-z`
+- Or make executable: `chmod +x dist/filename-character-remover-z` then double-click
+- Build: `./build.sh`
+
+**Build from Source (All Platforms):**
+
+Windows:
+```bash
+build.bat
+```
+
+Linux & macOS:
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+Or manually with PyInstaller:
 ```bash
 pip install pyinstaller
 pyinstaller --onefile --windowed filename-character-remover-z.py
@@ -126,11 +154,39 @@ A: Yes, cross-platform.
 
 #### Instalação
 
-**Python:** `python filename-character-remover-z.py`
+**Python (Todas as Plataformas):**
+```bash
+python3 filename-character-remover-z.py
+```
 
-**Executável Windows:** Apenas clique duas vezes no arquivo `.exe`
+**Windows Executável:**
+- Apenas clique duas vezes no arquivo `.exe` (executável único e independente, nenhum arquivo adicional necessário)
+- Compilar: `build.bat`
 
-**Construir Executável:**
+**macOS Aplicação:**
+- Clique duas vezes em `filename-character-remover-z.app` na pasta dist
+- Ou execute: `open dist/filename-character-remover-z.app`
+- Compilar: `./build.sh`
+
+**Linux Executável:**
+- Execute no terminal: `./dist/filename-character-remover-z`
+- Ou torne executável: `chmod +x dist/filename-character-remover-z` depois clique duas vezes
+- Compilar: `./build.sh`
+
+**Compilar do Código-Fonte (Todas as Plataformas):**
+
+Windows:
+```bash
+build.bat
+```
+
+Linux & macOS:
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+Ou manualmente com PyInstaller:
 ```bash
 pip install pyinstaller
 pyinstaller --onefile --windowed filename-character-remover-z.py

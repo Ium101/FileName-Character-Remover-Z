@@ -2,13 +2,16 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
 import re
+import sys
+import platform
 
-# DPI awareness fix for Windows high-DPI screens
-try:
-    import ctypes
-    ctypes.windll.shcore.SetProcessDpiAwareness(1)  # SYSTEM_AWARE
-except Exception:
-    pass
+# DPI awareness fix for Windows high-DPI screens (Windows only)
+if sys.platform == "win32":
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)  # SYSTEM_AWARE
+    except Exception:
+        pass
 
 class CustomCharacterRemover:
     def __init__(self, root):
