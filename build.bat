@@ -53,7 +53,7 @@ if exist app.ico (
     python -m PyInstaller filename-character-remover-z.py ^
         --onefile ^
         --windowed ^
-        --name filename-character-remover-z ^
+        --name "Filename Character Remover Z" ^
         --icon=app.ico ^
         --noconfirm
 ) else (
@@ -61,7 +61,7 @@ if exist app.ico (
     python -m PyInstaller filename-character-remover-z.py ^
         --onefile ^
         --windowed ^
-        --name filename-character-remover-z ^
+        --name "Filename Character Remover Z" ^
         --noconfirm
 )
 
@@ -79,7 +79,7 @@ echo Build completed successfully!
 echo ==========================================
 echo.
 echo The executable is located at:
-echo   dist\filename-character-remover-z.exe
+echo   dist\Filename Character Remover Z.exe
 echo.
 echo Single-file executable ready to distribute!
 echo No additional files needed.

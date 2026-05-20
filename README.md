@@ -1,8 +1,14 @@
-# Custom Character Remover | Removedor de Caracteres Personalizado
+# Filename Character Remover Z
 
 ![Python Version](https://img.shields.io/badge/python-3.6+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)
+
+---
+
+<div align="center">
+<img width="952" height="687" alt="app" src="https://github.com/user-attachments/assets/5dee9469-c682-406c-804d-ad93b1be7e8d" />
+</div>
 
 ---
 
@@ -16,217 +22,191 @@
 <a name="english"></a>
 ## 🇺🇸 English
 
-### Overview
+### What it does
 
-A safe and simple **cross-platform GUI tool** to remove specific characters from filenames in bulk. Works on Windows, macOS, and Linux with the same user experience.
+A simple GUI tool to clean up filenames in bulk — remove characters, fix Dolphin/KDE copy artefacts, or add missing extensions. It **only renames files**, never touches their contents.
 
-### ⚠️ Important Notice
+### Features
 
-**THIS TOOL ONLY RENAMES FILES - IT DOES NOT MODIFY FILE CONTENTS**
+- Remove any substring from filenames (letters, numbers, symbols, anything)
+- Fix Dolphin/KDE duplicate artefacts — `photo (1).png (1)` → `photo (1).png`
+- Add an extension to files that don't have one (example: add `.png` to all extensionless files)
+- Case-sensitive or case-insensitive matching
+- Warns you before anything that would change an existing file extension
+- Never overwrites — if the target name already exists, it auto-increments: `file (2).png`, `file (3).png`, etc.
+- Bilingual UI — switch between English and Brazilian Portuguese with one click
+- Made by Ium101
 
-This application uses `os.rename()` which only changes filenames in the file system. Your file contents remain completely untouched and safe.
+### Requirements
 
-### ✨ Features
+- Python 3.6+
+- tkinter (bundled with Python on Windows; on Linux: `sudo apt-get install python3-tk`)
 
-- 🎯 Remove any custom characters from filenames (letters, numbers, symbols)
-- 👀 Preview changes before applying them
-- 🔒 Test mode enabled by default for safety
-- 📊 Recursive scanning of all subfolders
-- ✅ Shows before/after preview for each file
-- 🚫 Prevents overwriting existing files
-- 📝 Detailed error reporting
-- 💻 **Cross-platform:** Windows, macOS, Linux with identical GUI
+### Running from source
 
-### 🚀 Quick Start
-
-#### Requirements
-
-- **Python 3.6 or higher** (required for source code)
-- **tkinter** (included with Python on Windows, install on Linux/macOS):
-  - **macOS:** Usually included with Python
-  - **Linux:** `sudo apt-get install python3-tk` (Debian/Ubuntu) or equivalent for your distro
-  - **Windows:** Included with Python
-
-#### Installation
-
-1. Clone this repository:
-```bash
-git clone https://github.com/yourusername/custom-character-remover.git
-cd custom-character-remover
-```
-
-2. Run the application:
-
-**Windows & macOS:**
+**Windows:**
 ```bash
 python filename-character-remover-z.py
 ```
 
-**Linux:**
+**Linux / macOS:**
 ```bash
-python3 filename-character-remover-z.py
+python3 filename-character-remover-z-linux.py
 ```
 
-Or use the built executables (see Building Executable section)
-
-#### Building Executable
+### Building a standalone executable
 
 **Windows:**
 ```bash
 build.bat
 ```
 
-**Linux & macOS:**
+**Linux / macOS:**
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
 
-The standalone executable will be created in the `dist` folder with everything bundled inside - no additional files needed!
+Output:
+- Windows → `dist\Filename Character Remover Z.exe`
+- Linux → `dist/Filename Character Remover Z`
+- macOS → `dist/Filename Character Remover Z.app`
 
-**Platform-specific outputs:**
-- **Windows:** `dist\filename-character-remover-z.exe`
-- **macOS:** `dist/filename-character-remover-z.app` (double-click to run)
-- **Linux:** `dist/filename-character-remover-z` (run in terminal or double-click if configured)
+### How to use
 
-### 📖 Usage
+The three main modes are mutually exclusive — pick one at a time:
 
-1. **Enter characters to remove** in the text field (e.g., `[]`, `abc123`, `@#$`)
-2. Click **"Select Folder"** to choose the directory
-3. Click **"Scan Files"** to find files with those characters
-4. Click **"Preview Changes"** to see what will happen
-5. Uncheck **"TEST MODE"** when ready
-6. Click **"RENAME FILES"** to apply changes
+**Mode 1 — Remove a substring**
+1. Leave both top checkboxes unchecked
+2. Type the substring to remove in the text field (example: `[]`)
+3. Select a folder or a single file
+4. Review the preview list, then hit **RENAME FILES**
 
-### 💡 Examples
+**Mode 2 — Fix Dolphin artefacts**
+1. Check **"Fix Dolphin/KDE duplicate artefacts"**
+2. Select a folder — it will find all files with trailing ` (N)` after their extension
+3. Review and rename
 
-| Input | Before | After |
-|-------|--------|-------|
-| `[]` | `photo[1].jpg` | `photo1.jpg` |
-| `[]()-_` | `file[test]_01.txt` | `filetest01.txt` |
-| `123` | `report-2023.pdf` | `report-0.pdf` |
-| `abc` | `backup_abc.zip` | `bkup_.zip` |
+**Mode 3 — Add extension to extensionless files**
+1. Check **"Add extension to files that have no extension"**
+2. Type the extension (example: `.png`)
+3. Select a folder — only files with no extension will be listed
+4. Review and rename
 
-### 🛡️ Safety Features
+### Safety
 
-- ✅ Test mode prevents accidental changes
-- ✅ Preview shows exact changes before applying
-- ✅ Multiple confirmation dialogs
-- ✅ Never modifies file contents
-- ✅ Checks for existing files to prevent overwrites
-- ✅ Detailed error reporting
+- The tool only uses `os.rename()` — file contents are never read or modified
+- If a rename would result in a duplicate, it adds `(2)`, `(3)`, etc. instead of overwriting
+- If removing a substring would change an existing extension, you get a warning before anything happens
+- You always get a final confirmation dialog before any renames run
 
-### 🤝 Contributing
+### FAQ
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+**Can I undo?**
+No automatic undo. Make a backup first, or keep copies somewhere.
 
-### 📄 License
+**Does it scan subfolders?**
+No, it only processes files directly inside the selected folder.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+**What if two files would get the same name?**
+It automatically picks the next available name — `file (2).png`, `file (3).png`, etc.
 
-### ⚠️ Disclaimer
-
-Always backup your files before performing bulk rename operations. While this tool is designed to be safe, unexpected issues can occur.
-
-### 📞 Support
-
-For issues, questions, or suggestions, please open an issue on GitHub.
+**Will it corrupt my files?**
+No. `os.rename()` only changes the filesystem entry. Contents are never touched.
 
 ---
 
 <a name="português-brasil"></a>
 ## 🇧🇷 Português (Brasil)
 
-### Visão Geral
+### O que faz
 
-Uma ferramenta GUI segura e simples para remover caracteres específicos de nomes de arquivos em massa.
+Uma ferramenta GUI simples para limpar nomes de arquivos em massa — remove caracteres, corrige artefatos de cópia do Dolphin/KDE, ou adiciona extensões que faltam. Ela **apenas renomeia arquivos**, nunca toca no conteúdo deles.
 
-### ⚠️ Aviso Importante
+### Recursos
 
-**ESTA FERRAMENTA APENAS RENOMEIA ARQUIVOS - NÃO MODIFICA O CONTEÚDO DOS ARQUIVOS**
+- Remove qualquer substring dos nomes de arquivo (letras, números, símbolos, qualquer coisa)
+- Corrige artefatos duplicados do Dolphin/KDE — `foto (1).png (1)` → `foto (1).png`
+- Adiciona extensão a arquivos que não têm nenhuma (exemplo: adicionar `.png` a todos os arquivos sem extensão)
+- Correspondência com ou sem diferenciação de maiúsculas
+- Avisa antes de qualquer operação que alteraria uma extensão de arquivo existente
+- Nunca sobrescreve — se o nome alvo já existe, incrementa automaticamente: `arquivo (2).png`, `arquivo (3).png`, etc.
+- Interface bilíngue — alterne entre Inglês e Português Brasileiro com um clique
+- Feito por Ium101
 
-Esta aplicação usa `os.rename()` que apenas altera nomes de arquivos no sistema de arquivos. O conteúdo dos seus arquivos permanece completamente intocado e seguro.
+### Requisitos
 
-### ✨ Recursos
+- Python 3.6+
+- tkinter (incluso com Python no Windows; no Linux: `sudo apt-get install python3-tk`)
 
-- 🎯 Remove qualquer caractere personalizado dos nomes de arquivos (letras, números, símbolos)
-- 👀 Pré-visualize mudanças antes de aplicá-las
-- 🔒 Modo de teste ativado por padrão para segurança
-- 📊 Varredura recursiva de todas as subpastas
-- ✅ Mostra pré-visualização antes/depois para cada arquivo
-- 🚫 Previne sobrescrita de arquivos existentes
-- 📝 Relatório detalhado de erros
+### Executando pelo código-fonte
 
-### 🚀 Início Rápido
-
-#### Requisitos
-
-- Python 3.6 ou superior
-- tkinter (incluído com Python)
-
-#### Instalação
-
-1. Clone este repositório:
-```bash
-git clone https://github.com/yourusername/custom-character-remover.git
-cd custom-character-remover
-```
-
-2. Execute a aplicação:
+**Windows:**
 ```bash
 python filename-character-remover-z.py
 ```
 
-#### Construindo Executável
-
-Para criar um executável standalone:
-
+**Linux / macOS:**
 ```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed filename-character-remover-z.py
+python3 filename-character-remover-z-linux.py
 ```
 
-O executável estará na pasta `dist`.
+### Construindo um executável independente
 
-### 📖 Uso
+**Windows:**
+```bash
+build.bat
+```
 
-1. **Digite os caracteres a remover** no campo de texto (ex: `[]`, `abc123`, `@#$`)
-2. Clique em **"Select Folder"** para escolher o diretório
-3. Clique em **"Scan Files"** para encontrar arquivos com esses caracteres
-4. Clique em **"Preview Changes"** para ver o que vai acontecer
-5. Desmarque **"TEST MODE"** quando estiver pronto
-6. Clique em **"RENAME FILES"** para aplicar as mudanças
+**Linux / macOS:**
+```bash
+chmod +x build.sh
+./build.sh
+```
 
-### 💡 Exemplos
+Saída:
+- Windows → `dist\Filename Character Remover Z.exe`
+- Linux → `dist/Filename Character Remover Z`
+- macOS → `dist/Filename Character Remover Z.app`
 
-| Entrada | Antes | Depois |
-|---------|-------|--------|
-| `[]` | `foto[1].jpg` | `foto1.jpg` |
-| `[]()-_` | `arquivo[teste]_01.txt` | `arquivoteste01.txt` |
-| `123` | `relatorio-2023.pdf` | `relatorio-0.pdf` |
-| `abc` | `backup_abc.zip` | `bkup_.zip` |
+### Como usar
 
-### 🛡️ Recursos de Segurança
+Os três modos principais são mutuamente exclusivos — escolha um por vez:
 
-- ✅ Modo de teste previne mudanças acidentais
-- ✅ Pré-visualização mostra mudanças exatas antes de aplicar
-- ✅ Múltiplos diálogos de confirmação
-- ✅ Nunca modifica conteúdo de arquivos
-- ✅ Verifica arquivos existentes para prevenir sobrescrita
-- ✅ Relatório detalhado de erros
+**Modo 1 — Remover substring**
+1. Deixe ambos os checkboxes do topo desmarcados
+2. Digite a substring a remover no campo de texto (exemplo: `[]`)
+3. Selecione uma pasta ou um único arquivo
+4. Revise a lista de pré-visualização e clique em **RENOMEAR ARQUIVOS**
 
-### 🤝 Contribuindo
+**Modo 2 — Corrigir artefatos do Dolphin**
+1. Marque **"Corrigir artefatos duplicados do Dolphin/KDE"**
+2. Selecione uma pasta — vai encontrar todos os arquivos com ` (N)` após a extensão
+3. Revise e renomeie
 
-Contribuições são bem-vindas! Sinta-se livre para enviar um Pull Request.
+**Modo 3 — Adicionar extensão a arquivos sem extensão**
+1. Marque **"Adicionar extensão a arquivos sem extensão"**
+2. Digite a extensão (exemplo: `.png`)
+3. Selecione uma pasta — apenas arquivos sem extensão serão listados
+4. Revise e renomeie
 
-### 📄 Licença
+### Segurança
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para detalhes.
+- A ferramenta usa apenas `os.rename()` — o conteúdo dos arquivos nunca é lido ou modificado
+- Se uma renomeação resultaria em duplicata, adiciona `(2)`, `(3)`, etc. em vez de sobrescrever
+- Se remover uma substring alteraria uma extensão existente, você recebe um aviso antes de qualquer coisa acontecer
+- Sempre há um diálogo de confirmação final antes de qualquer renomeação ser executada
 
-### ⚠️ Aviso Legal
+### Perguntas Frequentes
 
-Sempre faça backup dos seus arquivos antes de realizar operações de renomeação em massa. Embora esta ferramenta seja projetada para ser segura, problemas inesperados podem ocorrer.
+**Posso desfazer?**
+Sem desfazer automático. Faça backup primeiro, ou mantenha cópias em algum lugar.
 
-### 📞 Suporte
+**Varre subpastas?**
+Não, processa apenas arquivos diretamente dentro da pasta selecionada.
 
-Para problemas, questões ou sugestões, por favor abra uma issue no GitHub.
+**E se dois arquivos tiverem o mesmo nome resultante?**
+Escolhe automaticamente o próximo nome disponível — `arquivo (2).png`, `arquivo (3).png`, etc.
+
+**Vai corromper meus arquivos?**
+Não. `os.rename()` apenas altera a entrada no sistema de arquivos. O conteúdo nunca é tocado.

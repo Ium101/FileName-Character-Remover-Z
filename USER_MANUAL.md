@@ -10,280 +10,288 @@
 <a name="english"></a>
 ## 🇺🇸 English
 
-### Quick Start
+### Installation
 
-#### Installation
+**Run from source (all platforms):**
 
-**Python (All Platforms):**
+Windows:
 ```bash
-python3 filename-character-remover-z.py
+python filename-character-remover-z.py
 ```
 
-**Windows Executable:**
-- Just double-click the `.exe` file (single standalone executable, no additional files needed)
-- Build: `build.bat`
+Linux / macOS:
+```bash
+python3 filename-character-remover-z-linux.py
+```
 
-**macOS Application:**
-- Double-click `filename-character-remover-z.app` in the dist folder
-- Or run: `open dist/filename-character-remover-z.app`
-- Build: `./build.sh`
+**Pre-built executable:**
+- **Windows** — double-click `Filename Character Remover Z.exe`
+- **Linux** — run `./Filename\ Character\ Remover\ Z` in terminal, or double-click if your file manager supports it
+- **macOS** — double-click `Filename Character Remover Z.app` in Finder
 
-**Linux Executable:**
-- Run in terminal: `./dist/filename-character-remover-z`
-- Or make executable: `chmod +x dist/filename-character-remover-z` then double-click
-- Build: `./build.sh`
-
-**Build from Source (All Platforms):**
+**Build it yourself:**
 
 Windows:
 ```bash
 build.bat
 ```
 
-Linux & macOS:
+Linux / macOS:
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
 
-Or manually with PyInstaller:
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed filename-character-remover-z.py
-```
+---
 
-### How to Use
+### The three modes
 
-1. **Enter characters to remove** (e.g., `[]`, `abc123`, `@#$`)
-2. Click **"Select Folder"**
-3. Click **"Scan Files"** to find matching files
-4. Click **"Preview Changes"** to verify
-5. **Uncheck "TEST MODE"**
-6. Click **"RENAME FILES"**
+The top two checkboxes and the substring field are **mutually exclusive** — only one mode can be active at a time. Enabling a top checkbox automatically disables the substring field.
 
-### Examples
+---
 
-#### Remove brackets
-- Input: `[]`
-- `photo[1].jpg` → `photo1.jpg`
+#### Mode 1 — Remove a substring
 
-#### Remove multiple characters
-- Input: `[]()-_`
-- `file[test]_01.txt` → `filetest01.txt`
+Use this to strip a specific string from every filename in a folder.
 
-#### Remove numbers
-- Input: `123`
-- `report-2023.pdf` → `report-0.pdf`
+1. Make sure both top checkboxes are **unchecked**
+2. Type the substring to remove in the **"Substring to remove"** field (example: `[]`)
+3. Toggle **Case-sensitive matching** on or off depending on your needs
+4. Click **Select Folder** or **Select File**
+5. The list updates immediately with a preview: `old name  ->  new name`
+6. Click **RENAME FILES**, confirm the dialog
 
-#### Remove letters
-- Input: `abc`
-- `backup_abc.zip` → `bckup_.zip`
+**Examples:**
 
-### Interface Overview
+| Substring | Before | After |
+|-----------|--------|-------|
+| `[]` | `photo[1].jpg` | `photo1.jpg` |
+| `_draft` | `report_draft.pdf` | `report.pdf` |
+| `(copy)` | `file(copy).txt` | `file.txt` |
 
-| Element | Description |
-|---------|-------------|
-| **Yellow Warning Banner** | Reminds you files are only renamed, never modified |
-| **Character Input** | Type any characters to remove |
-| **TEST MODE** (checkbox) | Prevents accidental changes - keep ON until ready |
-| **Select Folder** (Blue) | Choose directory |
-| **Scan Files** (Teal) | Find files with those characters |
-| **Preview Changes** (Orange) | See what will happen |
-| **RENAME FILES** (Red) | Execute the renaming |
-| **File List** | Shows `old_name → new_name` for each file |
-| **Status Bar** | Progress and results |
+---
 
-### Safety Features
+#### Mode 2 — Fix Dolphin/KDE duplicate artefacts
 
-✅ **Test Mode** - Default ON, prevents accidents  
-✅ **Preview** - See changes before applying  
-✅ **Only uses os.rename()** - Cannot corrupt file contents  
-✅ **Conflict detection** - Won't overwrite existing files  
-✅ **Multiple confirmations** - You must explicitly approve
+Dolphin (the KDE file manager) sometimes appends ` (1)` after the file extension when copying — so you end up with `photo (1).png (1)` instead of `photo (1).png`. Windows can't even display these as images. This mode fixes that.
+
+1. Check **"Fix Dolphin/KDE duplicate artefacts"**
+2. Click **Select Folder**
+3. It will list all affected files with the corrected names
+4. Click **RENAME FILES**
+
+**What it fixes:**
+
+| Before | After |
+|--------|-------|
+| `photo (1).png (1)` | `photo (1).png` |
+| `document (2).pdf (3)` | `document (2).pdf` |
+| `screenshot (1).jpeg (1)` | `screenshot (1).jpeg` |
+
+Files without this artefact are left alone.
+
+---
+
+#### Mode 3 — Add extension to extensionless files
+
+Useful when files are missing their extension entirely — for example, images downloaded without a `.jpg` or `.png`.
+
+1. Check **"Add extension to files that have no extension"**
+2. Type the extension in the field that appears (example: `.png` — the dot is optional, `png` works too)
+3. Click **Select Folder**
+4. Only files with no extension will be listed
+5. Click **RENAME FILES**
+
+Files that already have an extension are ignored by this mode.
+
+---
+
+### Duplicate handling
+
+If a rename would produce a name that already exists on disk, the tool automatically picks the next free name instead of overwriting:
+
+- `photo.png` already exists → result becomes `photo (2).png`
+- `photo (2).png` also exists → result becomes `photo (3).png`
+- and so on
+
+You will never lose a file due to an accidental overwrite.
+
+---
+
+### Extension change warning
+
+If removing a substring would accidentally change or remove a file's existing extension (example: removing `.jp` from `photo.jpg` would produce `photo.g`), the tool shows a warning dialog listing all affected files before continuing. You can cancel at that point.
+
+---
+
+### Language toggle
+
+The small button in the top-right corner of the yellow banner switches the interface between **English** and **Brazilian Portuguese**. All labels, buttons, dialogs, and the credits line switch instantly.
+
+---
 
 ### Troubleshooting
 
-#### "No files found"
-- Check you entered the right characters
-- Verify you selected the correct folder
+**No files appear in the list**
+- Check that you typed the right substring
+- Make sure you selected the right folder
+- If using Dolphin fix, the folder may have no artefacts — that's fine
 
-#### "Target file already exists"
-- A file with the new name already exists
-- Rename the existing file first or choose different characters
+**"New filename would be empty"**
+- The substring you're removing makes up the entire filename (without extension)
+- Try a more specific substring
 
-#### "New filename would be empty"
-- You're removing all characters from the filename
-- Don't remove characters that make up the entire name
+**"Permission denied"**
+- Close any programs that have those files open
+- On Linux/macOS, check file permissions: `ls -la`
+- On Windows, try running as administrator
 
-#### "Permission denied"
-- Close programs using the files
-- Run as administrator
-- Remove read-only flag from files
-
-### FAQ
-
-**Q: Will this corrupt my files?**  
-A: No. It only renames files using `os.rename()`. File contents are never touched.
-
-**Q: Can I undo?**  
-A: No automatic undo. Make backups before using or restore from Windows Previous Versions.
-
-**Q: Does it scan subfolders?**  
-A: Yes, recursively scans all subfolders.
-
-**Q: What characters can I remove?**  
-A: Any - letters, numbers, symbols, spaces.
-
-**Q: Works on Mac/Linux?**  
-A: Yes, cross-platform.
-
-### Best Practices
-
-✅ Always backup important files first  
-✅ Test on copies before using on originals  
-✅ Use Preview before renaming  
-✅ Keep Test Mode ON until you're sure  
-✅ Close programs using the files
+**The window won't resize**
+- That's intentional — the window size is fixed so it stays consistent
 
 ---
 
 <a name="português-brasil"></a>
 ## 🇧🇷 Português (Brasil)
 
-### Início Rápido
+### Instalação
 
-#### Instalação
+**Executar pelo código-fonte (todas as plataformas):**
 
-**Python (Todas as Plataformas):**
+Windows:
 ```bash
-python3 filename-character-remover-z.py
+python filename-character-remover-z.py
 ```
 
-**Windows Executável:**
-- Apenas clique duas vezes no arquivo `.exe` (executável único e independente, nenhum arquivo adicional necessário)
-- Compilar: `build.bat`
+Linux / macOS:
+```bash
+python3 filename-character-remover-z-linux.py
+```
 
-**macOS Aplicação:**
-- Clique duas vezes em `filename-character-remover-z.app` na pasta dist
-- Ou execute: `open dist/filename-character-remover-z.app`
-- Compilar: `./build.sh`
+**Executável pré-compilado:**
+- **Windows** — clique duas vezes em `Filename Character Remover Z.exe`
+- **Linux** — execute `./Filename\ Character\ Remover\ Z` no terminal, ou clique duas vezes se seu gerenciador de arquivos suportar
+- **macOS** — clique duas vezes em `Filename Character Remover Z.app` no Finder
 
-**Linux Executável:**
-- Execute no terminal: `./dist/filename-character-remover-z`
-- Ou torne executável: `chmod +x dist/filename-character-remover-z` depois clique duas vezes
-- Compilar: `./build.sh`
-
-**Compilar do Código-Fonte (Todas as Plataformas):**
+**Compilar você mesmo:**
 
 Windows:
 ```bash
 build.bat
 ```
 
-Linux & macOS:
+Linux / macOS:
 ```bash
 chmod +x build.sh
 ./build.sh
 ```
 
-Ou manualmente com PyInstaller:
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed filename-character-remover-z.py
-```
+---
 
-### Como Usar
+### Os três modos
 
-1. **Digite os caracteres a remover** (ex: `[]`, `abc123`, `@#$`)
-2. Clique em **"Select Folder"**
-3. Clique em **"Scan Files"** para encontrar arquivos correspondentes
-4. Clique em **"Preview Changes"** para verificar
-5. **Desmarque "TEST MODE"**
-6. Clique em **"RENAME FILES"**
+Os dois checkboxes do topo e o campo de substring são **mutuamente exclusivos** — apenas um modo pode estar ativo por vez. Ativar um checkbox do topo desativa automaticamente o campo de substring.
 
-### Exemplos
+---
 
-#### Remover colchetes
-- Entrada: `[]`
-- `foto[1].jpg` → `foto1.jpg`
+#### Modo 1 — Remover uma substring
 
-#### Remover múltiplos caracteres
-- Entrada: `[]()-_`
-- `arquivo[teste]_01.txt` → `arquivoteste01.txt`
+Use para remover uma string específica de todos os nomes de arquivo em uma pasta.
 
-#### Remover números
-- Entrada: `123`
-- `relatorio-2023.pdf` → `relatorio-0.pdf`
+1. Certifique-se de que ambos os checkboxes do topo estão **desmarcados**
+2. Digite a substring a remover no campo **"Substring a remover"** (exemplo: `[]`)
+3. Ative ou desative **Correspondência com diferenciação de maiúsculas** conforme necessário
+4. Clique em **Selecionar Pasta** ou **Selecionar Arquivo**
+5. A lista atualiza imediatamente com uma pré-visualização: `nome antigo  ->  nome novo`
+6. Clique em **RENOMEAR ARQUIVOS** e confirme o diálogo
 
-#### Remover letras
-- Entrada: `abc`
-- `backup_abc.zip` → `bkup_.zip`
+**Exemplos:**
 
-### Visão Geral da Interface
+| Substring | Antes | Depois |
+|-----------|-------|--------|
+| `[]` | `foto[1].jpg` | `foto1.jpg` |
+| `_rascunho` | `relatorio_rascunho.pdf` | `relatorio.pdf` |
+| `(copia)` | `arquivo(copia).txt` | `arquivo.txt` |
 
-| Elemento | Descrição |
-|----------|-----------|
-| **Banner Amarelo de Aviso** | Lembra que arquivos são apenas renomeados, nunca modificados |
-| **Entrada de Caracteres** | Digite quaisquer caracteres para remover |
-| **TEST MODE** (checkbox) | Previne mudanças acidentais - mantenha LIGADO até estar pronto |
-| **Select Folder** (Azul) | Escolha o diretório |
-| **Scan Files** (Verde-azulado) | Encontra arquivos com esses caracteres |
-| **Preview Changes** (Laranja) | Veja o que vai acontecer |
-| **RENAME FILES** (Vermelho) | Executa a renomeação |
-| **Lista de Arquivos** | Mostra `nome_antigo → nome_novo` para cada arquivo |
-| **Barra de Status** | Progresso e resultados |
+---
 
-### Recursos de Segurança
+#### Modo 2 — Corrigir artefatos duplicados do Dolphin/KDE
 
-✅ **Modo de Teste** - Padrão LIGADO, previne acidentes  
-✅ **Pré-visualização** - Veja mudanças antes de aplicar  
-✅ **Usa apenas os.rename()** - Não pode corromper conteúdo de arquivos  
-✅ **Detecção de conflitos** - Não sobrescreve arquivos existentes  
-✅ **Múltiplas confirmações** - Você deve aprovar explicitamente
+O Dolphin (gerenciador de arquivos do KDE) às vezes adiciona ` (1)` após a extensão do arquivo ao copiar — resultando em `foto (1).png (1)` em vez de `foto (1).png`. O Windows nem consegue exibir esses arquivos como imagens. Este modo corrige isso.
+
+1. Marque **"Corrigir artefatos duplicados do Dolphin/KDE"**
+2. Clique em **Selecionar Pasta**
+3. Listará todos os arquivos afetados com os nomes corrigidos
+4. Clique em **RENOMEAR ARQUIVOS**
+
+**O que corrige:**
+
+| Antes | Depois |
+|-------|--------|
+| `foto (1).png (1)` | `foto (1).png` |
+| `documento (2).pdf (3)` | `documento (2).pdf` |
+| `captura (1).jpeg (1)` | `captura (1).jpeg` |
+
+Arquivos sem esse artefato são ignorados.
+
+---
+
+#### Modo 3 — Adicionar extensão a arquivos sem extensão
+
+Útil quando arquivos estão sem extensão — por exemplo, imagens baixadas sem `.jpg` ou `.png`.
+
+1. Marque **"Adicionar extensão a arquivos sem extensão"**
+2. Digite a extensão no campo que aparece (exemplo: `.png` — o ponto é opcional, `png` também funciona)
+3. Clique em **Selecionar Pasta**
+4. Apenas arquivos sem extensão serão listados
+5. Clique em **RENOMEAR ARQUIVOS**
+
+Arquivos que já têm uma extensão são ignorados por este modo.
+
+---
+
+### Tratamento de duplicatas
+
+Se uma renomeação produziria um nome que já existe no disco, a ferramenta escolhe automaticamente o próximo nome disponível em vez de sobrescrever:
+
+- `foto.png` já existe → resultado vira `foto (2).png`
+- `foto (2).png` também existe → resultado vira `foto (3).png`
+- e assim por diante
+
+Você nunca perderá um arquivo por sobrescrita acidental.
+
+---
+
+### Aviso de alteração de extensão
+
+Se remover uma substring alteraria ou removeria acidentalmente a extensão existente de um arquivo (exemplo: remover `.jp` de `foto.jpg` produziria `foto.g`), a ferramenta mostra um diálogo de aviso listando todos os arquivos afetados antes de continuar. Você pode cancelar nesse ponto.
+
+---
+
+### Alternância de idioma
+
+O pequeno botão no canto superior direito do banner amarelo alterna a interface entre **Inglês** e **Português Brasileiro**. Todos os rótulos, botões, diálogos e o texto de créditos mudam instantaneamente.
+
+---
 
 ### Solução de Problemas
 
-#### "No files found" (Nenhum arquivo encontrado)
-- Verifique se digitou os caracteres corretos
-- Verifique se selecionou a pasta correta
+**Nenhum arquivo aparece na lista**
+- Verifique se digitou a substring correta
+- Certifique-se de ter selecionado a pasta correta
+- Se usar a correção do Dolphin, a pasta pode não ter artefatos — tudo certo
 
-#### "Target file already exists" (Arquivo de destino já existe)
-- Um arquivo com o novo nome já existe
-- Renomeie o arquivo existente primeiro ou escolha caracteres diferentes
+**"Novo nome ficaria vazio"**
+- A substring que está removendo compõe o nome completo do arquivo (sem extensão)
+- Tente uma substring mais específica
 
-#### "New filename would be empty" (Novo nome de arquivo seria vazio)
-- Você está removendo todos os caracteres do nome do arquivo
-- Não remova caracteres que compõem o nome inteiro
+**"Permissão negada"**
+- Feche programas que tenham esses arquivos abertos
+- No Linux/macOS, verifique as permissões: `ls -la`
+- No Windows, tente executar como administrador
 
-#### "Permission denied" (Permissão negada)
-- Feche programas usando os arquivos
-- Execute como administrador
-- Remova a flag de somente leitura dos arquivos
-
-### Perguntas Frequentes
-
-**P: Isso vai corromper meus arquivos?**  
-R: Não. Apenas renomeia arquivos usando `os.rename()`. O conteúdo dos arquivos nunca é tocado.
-
-**P: Posso desfazer?**  
-R: Não há desfazer automático. Faça backups antes de usar ou restaure das Versões Anteriores do Windows.
-
-**P: Varre subpastas?**  
-R: Sim, varre recursivamente todas as subpastas.
-
-**P: Quais caracteres posso remover?**  
-R: Quaisquer - letras, números, símbolos, espaços.
-
-**P: Funciona no Mac/Linux?**  
-R: Sim, é multiplataforma.
-
-### Melhores Práticas
-
-✅ Sempre faça backup de arquivos importantes primeiro  
-✅ Teste em cópias antes de usar nos originais  
-✅ Use Pré-visualização antes de renomear  
-✅ Mantenha o Modo de Teste LIGADO até ter certeza  
-✅ Feche programas usando os arquivos
+**A janela não redimensiona**
+- Isso é intencional — o tamanho da janela é fixo para manter consistência
 
 ---
 
@@ -292,5 +300,7 @@ R: Sim, é multiplataforma.
 **Important | Importante:** This tool ONLY renames files. It does NOT modify file contents.
 
 Esta ferramenta APENAS renomeia arquivos. NÃO modifica o conteúdo dos arquivos.
+
+*Made by Ium101 | Feito por Ium101*
 
 </div>

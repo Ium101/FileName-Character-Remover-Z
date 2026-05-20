@@ -81,7 +81,7 @@ if [ "$OS" = "Darwin" ]; then
     python3 -m PyInstaller filename-character-remover-z.py \
         --onefile \
         --windowed \
-        --name filename-character-remover-z \
+        --name "Filename Character Remover Z" \
         --noconfirm \
         --osx-bundle-identifier "com.customcharacterremover.app"
 elif [ "$OS" = "Linux" ]; then
@@ -89,14 +89,14 @@ elif [ "$OS" = "Linux" ]; then
     python3 -m PyInstaller filename-character-remover-z.py \
         --onefile \
         --windowed \
-        --name filename-character-remover-z \
+        --name "Filename Character Remover Z" \
         --noconfirm
 else
     # Generic build for other Unix-like systems
     python3 -m PyInstaller filename-character-remover-z.py \
         --onefile \
         --windowed \
-        --name filename-character-remover-z \
+        --name "Filename Character Remover Z" \
         --noconfirm
 fi
 
@@ -122,16 +122,16 @@ echo ""
 
 if [ "$OS" = "Darwin" ]; then
     echo "The application is located at:"
-    echo "  dist/filename-character-remover-z.app"
+    echo "  dist/Filename Character Remover Z.app"
     echo ""
-    echo "To run: open dist/filename-character-remover-z.app"
+    echo "To run: open \"dist/Filename Character Remover Z.app\""
     echo "Or double-click the app in Finder"
 else
     echo "The executable is located at:"
-    echo "  dist/filename-character-remover-z"
+    echo "  dist/Filename Character Remover Z"
     echo ""
-    echo "To run: ./dist/filename-character-remover-z"
-    echo "Or make it executable: chmod +x dist/filename-character-remover-z"
+    echo "To run: ./dist/Filename\ Character\ Remover\ Z"
+    echo "Or make it executable: chmod +x \"dist/Filename Character Remover Z\""
 fi
 
 echo ""
