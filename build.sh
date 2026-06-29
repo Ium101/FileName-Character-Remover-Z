@@ -1,139 +1,149 @@
 #!/bin/bash
 
-# ==========================================
-# Filename Character Remover - Build Script
-# Universal build script for Linux, macOS
-# ==========================================
+EXEC_NAME="Filename_Character_Remover_Z"
+SCRIPT_NAME="filename-character-remover-z.py"
+APP_NAME="Filename Character Remover Z"
+DESKTOP_FILE_NAME="filename-character-remover-z.desktop"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$HOME/.local/share/applications"
+ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
+DESKTOP_DIR=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
 
-set -e  # Exit on error
-
-echo ""
 echo "=========================================="
-echo "Building .exe GUI application..."
+echo "  Building $APP_NAME for Linux"
 echo "=========================================="
-echo ""
-echo "Detected OS: $(uname -s)"
-echo ""
 
-# Check if Python is available
-if ! command -v python3 &> /dev/null; then
-    echo "Error: Python 3 is not installed or not in PATH"
-    echo "Please install Python 3.6 or higher"
+if [ ! -f "$SCRIPT_DIR/$SCRIPT_NAME" ]; then
+    echo "ERROR: $SCRIPT_NAME not found in $SCRIPT_DIR"
     exit 1
 fi
 
-echo "Python version:"
-python3 --version
-echo ""
+mkdir -p "$APP_DIR" "$DESKTOP_DIR" "$ICON_DIR"
 
-OS=$(uname -s)
+# Install dependencies
+echo "[INFO] Installing dependencies..."
+python3 -m pip install pyinstaller pillow --break-system-packages -q 2>/dev/null || \
+    python3 -m pip install pyinstaller pillow -q 2>/dev/null || true
 
-# ==========================================
-# Setup: install PyInstaller safely
-# Handles externally-managed environments
-# (Arch Linux, newer Debian/Ubuntu, etc.)
-# ==========================================
+# Clean old builds
+echo "[INFO] Cleaning old builds..."
+rm -rf "$SCRIPT_DIR/build/" "$SCRIPT_DIR/__pycache__/"
 
-install_pyinstaller() {
-    # Try normal pip first
-    if python3 -m pip install --upgrade pyinstaller 2>/dev/null; then
-        return 0
-    fi
+# ---------------------------------------------------------------------------
+# Install SVG icon — exported from the same base64 icon embedded in the .py
+# source (single source of truth, also used for the live window icon).
+# Transparent background, teal document + Z badge, no black anywhere.
+# ---------------------------------------------------------------------------
+echo "[INFO] Installing icon..."
+ICON_PATH="$ICON_DIR/filename-character-remover-z.svg"
+python3 "$SCRIPT_DIR/$SCRIPT_NAME" --generate-icon --svg="$ICON_PATH"
+if [ ! -f "$ICON_PATH" ]; then
+    echo "[WARN] Icon generation failed, continuing without icon."
+fi
 
-    # Externally-managed environment (e.g. Arch Linux) — try --break-system-packages
-    echo "Normal pip install failed. Trying --break-system-packages..."
-    if python3 -m pip install --upgrade pyinstaller --break-system-packages 2>/dev/null; then
-        return 0
-    fi
+# Also put a copy in the flat icons dir (for DEs that look there)
+ICON_DIR_FLAT="$HOME/.local/share/icons"
+cp "$ICON_PATH" "$ICON_DIR_FLAT/filename-character-remover-z.svg"
 
-    # Fall back to a virtual environment
-    echo "--break-system-packages also failed. Falling back to virtual environment..."
-    VENV_DIR=".venv_build"
-    python3 -m venv "$VENV_DIR"
-    source "$VENV_DIR/bin/activate"
-    pip install --upgrade pyinstaller
-    echo "Virtual environment activated: $VENV_DIR"
-    USE_VENV=1
-    return 0
-}
-
-USE_VENV=0
-echo "Installing PyInstaller (if not already installed)..."
-install_pyinstaller
+# Build executable
+echo "[INFO] Building executable..."
+python3 -m PyInstaller --onefile --windowed \
+    --name "$EXEC_NAME" \
+    --distpath "$SCRIPT_DIR" \
+    --workpath "$SCRIPT_DIR/build" \
+    --specpath "$SCRIPT_DIR" \
+    "$SCRIPT_DIR/$SCRIPT_NAME"
 
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to install PyInstaller by any method."
+    echo "[ERROR] Build failed."
     exit 1
 fi
 
-# Clean previous builds
-echo ""
-echo "Cleaning previous builds..."
-rm -rf build dist *.spec 2>/dev/null || true
+chmod +x "$SCRIPT_DIR/$EXEC_NAME"
 
-echo ""
-echo "Building executable from source..."
-echo ""
+# ---------------------------------------------------------------------------
+# Write the .desktop entry (system menu / Start Menu equivalent)
+# ---------------------------------------------------------------------------
+echo "[INFO] Registering in system menu..."
+DESKTOP_ENTRY_CONTENT="[Desktop Entry]
+Name=$APP_NAME
+Comment=Remove custom characters from filenames / Remover caracteres de nomes de arquivo
+Exec=$SCRIPT_DIR/$EXEC_NAME
+Icon=filename-character-remover-z
+Terminal=false
+Type=Application
+Categories=Utility;FileTools;FileManager;
+StartupNotify=true
+"
 
-# Build using PyInstaller
-if [ "$OS" = "Darwin" ]; then
-    # macOS-specific settings
-    python3 -m PyInstaller filename-character-remover-z.py \
-        --onefile \
-        --windowed \
-        --name "Filename Character Remover Z" \
-        --noconfirm \
-        --osx-bundle-identifier "com.customcharacterremover.app"
-elif [ "$OS" = "Linux" ]; then
-    # Linux build
-    python3 -m PyInstaller filename-character-remover-z.py \
-        --onefile \
-        --windowed \
-        --name "Filename Character Remover Z" \
-        --noconfirm
-else
-    # Generic build for other Unix-like systems
-    python3 -m PyInstaller filename-character-remover-z.py \
-        --onefile \
-        --windowed \
-        --name "Filename Character Remover Z" \
-        --noconfirm
+# Write to applications dir (Start Menu)
+printf '%s' "$DESKTOP_ENTRY_CONTENT" > "$APP_DIR/$DESKTOP_FILE_NAME"
+chmod 644 "$APP_DIR/$DESKTOP_FILE_NAME"
+
+# ---------------------------------------------------------------------------
+# Write the Desktop shortcut
+# ---------------------------------------------------------------------------
+echo "[INFO] Creating Desktop shortcut..."
+printf '%s' "$DESKTOP_ENTRY_CONTENT" > "$DESKTOP_DIR/$DESKTOP_FILE_NAME"
+chmod 755 "$DESKTOP_DIR/$DESKTOP_FILE_NAME"
+
+# Mark as trusted (suppresses GNOME/KDE "Untrusted launcher" prompt)
+if command -v gio &>/dev/null; then
+    gio set "$DESKTOP_DIR/$DESKTOP_FILE_NAME" metadata::trusted true 2>/dev/null
+fi
+# KDE/Plasma: mark executable bit already covers trust — but also set xattr if attr is present
+if command -v attr &>/dev/null; then
+    attr -s "user.baloo.rating" -V 0 "$DESKTOP_DIR/$DESKTOP_FILE_NAME" 2>/dev/null || true
 fi
 
-BUILD_RESULT=$?
+# ---------------------------------------------------------------------------
+# Refresh desktop databases / caches
+# ---------------------------------------------------------------------------
+echo "[INFO] Refreshing menu and icon caches..."
 
-# Deactivate venv if we used one
-if [ "$USE_VENV" = "1" ]; then
-    deactivate 2>/dev/null || true
+# XDG application database
+if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database "$APP_DIR" 2>/dev/null
 fi
 
-if [ $BUILD_RESULT -ne 0 ]; then
-    echo ""
-    echo "Error: Build failed!"
-    echo "Please check the Python file for syntax errors."
-    exit 1
+# GTK icon cache
+if command -v gtk-update-icon-cache &>/dev/null; then
+    gtk-update-icon-cache -f -t "$HOME/.local/share/icons" 2>/dev/null || true
 fi
+
+# KDE / Plasma menu cache
+if command -v kbuildsycoca6 &>/dev/null; then
+    kbuildsycoca6 --noincremental 2>/dev/null
+elif command -v kbuildsycoca5 &>/dev/null; then
+    kbuildsycoca5 --noincremental 2>/dev/null
+fi
+
+# Notify the file manager / shell that desktop has changed
+if command -v xdg-open &>/dev/null && command -v xdotool &>/dev/null; then
+    true  # no-op; just ensuring gio set above was enough
+fi
+
+# ---------------------------------------------------------------------------
+# Clean up build artifacts
+# ---------------------------------------------------------------------------
+echo "[INFO] Cleaning up..."
+rm -rf "$SCRIPT_DIR/build/" "$SCRIPT_DIR/${EXEC_NAME}.spec"
 
 echo ""
 echo "=========================================="
-echo "Build completed successfully!"
+echo "  Done!"
+echo "  Executable : $SCRIPT_DIR/$EXEC_NAME"
+echo "  Icon       : $ICON_PATH"
+echo "  Menu entry : $APP_DIR/$DESKTOP_FILE_NAME"
+echo "  Desktop    : $DESKTOP_DIR/$DESKTOP_FILE_NAME"
+echo ""
+echo "  Features in the app:"
+echo "   - Dark/Light theme toggle (🌙 / ☀️ button, top-right)"
+echo "   - Remembers last selected folder between sessions"
+echo "   - Native KDE folder picker (kdialog) when available"
+echo "   - Falls back to tkinter dialog on other DEs"
+echo ""
+echo "  If the desktop icon shows 'Untrusted':"
+echo "    Right-click it -> Properties -> Permissions -> Allow executing"
+echo "    Or: chmod +x \"$DESKTOP_DIR/$DESKTOP_FILE_NAME\""
 echo "=========================================="
-echo ""
-
-if [ "$OS" = "Darwin" ]; then
-    echo "The application is located at:"
-    echo "  dist/Filename Character Remover Z.app"
-    echo ""
-    echo "To run: open \"dist/Filename Character Remover Z.app\""
-    echo "Or double-click the app in Finder"
-else
-    echo "The executable is located at:"
-    echo "  dist/Filename Character Remover Z"
-    echo ""
-    echo "To run: ./dist/Filename\ Character\ Remover\ Z"
-    echo "Or make it executable: chmod +x \"dist/Filename Character Remover Z\""
-fi
-
-echo ""
-echo "Single-file executable ready to distribute!"
-echo ""

@@ -1,87 +1,131 @@
 @echo off
-REM ==========================================
-REM Filename Character Remover - Build Script
-REM Windows Build Script
-REM ==========================================
+setlocal EnableDelayedExpansion
 
-setlocal enabledelayedexpansion
+set SCRIPT_NAME=filename-character-remover-z.py
+set APP_NAME=Filename Character Remover Z
+set EXEC_NAME=Filename_Character_Remover_Z.exe
+set ICON_FILE=icon_fcr_z.ico
 
-echo.
-echo ========================================
-echo Building .exe GUI application...
-echo For Linux/macOS, use: build.sh
-echo ========================================
-echo.
+cd /d "%~dp0"
 
-REM Ensure Python is available
+:: Strip trailing backslash from %%~dp0 to avoid broken quoted paths.
+set "PROJ=%~dp0"
+set "PROJ=%PROJ:~0,-1%"
+
+echo ===========================================
+echo  Building Filename Character Remover Z
+echo  for Windows
+echo ===========================================
+
+:: Check Python
 python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo Error: Python is not installed or not in PATH
+if errorlevel 1 (
+    echo [ERROR] Python not found. Install from python.org and add to PATH.
     pause
     exit /b 1
 )
 
-echo Installing PyInstaller (if not already installed)...
-python -m pip install --upgrade pyinstaller
-
-if %errorlevel% neq 0 (
-    echo Error: Failed to install PyInstaller
+:: Check script exists
+if not exist "%SCRIPT_NAME%" (
+    echo [ERROR] %SCRIPT_NAME% not found in current directory.
     pause
     exit /b 1
 )
 
-REM Clean previous builds
-echo.
-echo Cleaning previous builds...
-if exist build (
-    rmdir /s /q build >nul 2>&1
+:: Install dependencies
+echo [INFO] Checking dependencies...
+python -m pip show pyinstaller >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Installing PyInstaller...
+    python -m pip install pyinstaller
 )
-if exist dist (
-    rmdir /s /q dist >nul 2>&1
-)
-if exist "filename-character-remover-z.spec" (
-    del "filename-character-remover-z.spec" >nul 2>&1
+python -m pip show pillow >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Installing Pillow...
+    python -m pip install pillow
 )
 
-echo.
-echo Building executable from source...
-echo.
+:: Clean old builds
+echo [INFO] Cleaning old builds...
+if exist "%PROJ%\build"       rd /s /q "%PROJ%\build"
+if exist "%PROJ%\__pycache__" rd /s /q "%PROJ%\__pycache__"
 
-REM Build using PyInstaller (use python -m for reliability)
-if exist app.ico (
-    echo Using custom icon...
-    python -m PyInstaller filename-character-remover-z.py ^
-        --onefile ^
-        --windowed ^
-        --name "Filename Character Remover Z" ^
-        --icon=app.ico ^
-        --noconfirm
+:: Generate icon
+:: Icon is now embedded as base64 directly inside the .py source (single
+:: source of truth, also used to set the live window icon at runtime).
+:: This just asks the script to export it to a temp .ico file.
+echo [INFO] Generating icon...
+python "%SCRIPT_NAME%" --generate-icon --ico="%PROJ%\%ICON_FILE%"
+if not exist "%PROJ%\%ICON_FILE%" (
+    echo [WARN] Icon generation failed, building without icon.
+)
+
+:: Build executable
+echo [INFO] Building executable...
+if exist "%PROJ%\%ICON_FILE%" (
+    python -m PyInstaller --onefile --windowed --name "Filename_Character_Remover_Z" --icon "%PROJ%\%ICON_FILE%" --distpath "%PROJ%" --workpath "%PROJ%\build" --specpath "%PROJ%" "%SCRIPT_NAME%"
 ) else (
-    echo Building without custom icon...
-    python -m PyInstaller filename-character-remover-z.py ^
-        --onefile ^
-        --windowed ^
-        --name "Filename Character Remover Z" ^
-        --noconfirm
+    python -m PyInstaller --onefile --windowed --name "Filename_Character_Remover_Z" --distpath "%PROJ%" --workpath "%PROJ%\build" --specpath "%PROJ%" "%SCRIPT_NAME%"
 )
-
-if %errorlevel% neq 0 (
-    echo.
-    echo Error: Build failed!
-    echo Please check the Python file for syntax errors.
+if errorlevel 1 (
+    echo [ERROR] Build failed.
     pause
     exit /b 1
 )
 
+:: Create Desktop and Start Menu shortcuts via a temp PowerShell script.
+:: Writing a .ps1 file avoids ALL cmd.exe quoting/escaping issues that
+:: break inline -Command calls when paths contain spaces or special chars.
+echo [INFO] Creating shortcuts...
+set "PS_TMP=%TEMP%\fcr_z_shortcut_%RANDOM%.ps1"
+set "TARGET=%PROJ%\%EXEC_NAME%"
+set "STARTMENU_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
+if not exist "%STARTMENU_DIR%" mkdir "%STARTMENU_DIR%"
+
+(
+    echo $target   = '%TARGET%'
+    echo $workdir  = '%PROJ%'
+    echo $appname  = 'Filename Character Remover Z'
+    echo $desc     = 'Filename Character Remover Z'
+    echo $ws = New-Object -ComObject WScript.Shell
+    echo.
+    echo # Desktop shortcut ^(uses the real shell folder, works on all locales^)
+    echo $desktop = [Environment]::GetFolderPath^('Desktop'^)
+    echo $lnk1 = $ws.CreateShortcut^("$desktop\$appname.lnk"^)
+    echo $lnk1.TargetPath       = $target
+    echo $lnk1.WorkingDirectory = $workdir
+    echo $lnk1.IconLocation     = "$target,0"
+    echo $lnk1.Description      = $desc
+    echo $lnk1.Save^(^)
+    echo Write-Host "[OK] Desktop shortcut created: $desktop\$appname.lnk"
+    echo.
+    echo # Start Menu shortcut
+    echo $startmenu = '%STARTMENU_DIR%'
+    echo $lnk2 = $ws.CreateShortcut^("$startmenu\$appname.lnk"^)
+    echo $lnk2.TargetPath       = $target
+    echo $lnk2.WorkingDirectory = $workdir
+    echo $lnk2.IconLocation     = "$target,0"
+    echo $lnk2.Description      = $desc
+    echo $lnk2.Save^(^)
+    echo Write-Host "[OK] Start Menu shortcut created: $startmenu\$appname.lnk"
+) > "%PS_TMP%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_TMP%"
+if errorlevel 1 (
+    echo [WARN] Shortcut creation may have failed. Check paths manually.
+)
+del /f /q "%PS_TMP%" >nul 2>&1
+
+:: Clean up build artifacts
+echo [INFO] Cleaning up...
+del /f /q "%PROJ%\%ICON_FILE%" >nul 2>&1
+if exist "%PROJ%\build"                             rd /s /q "%PROJ%\build"
+if exist "%PROJ%\Filename_Character_Remover_Z.spec" del /f /q "%PROJ%\Filename_Character_Remover_Z.spec"
+
 echo.
-echo ==========================================
-echo Build completed successfully!
-echo ==========================================
-echo.
-echo The executable is located at:
-echo   dist\Filename Character Remover Z.exe
-echo.
-echo Single-file executable ready to distribute!
-echo No additional files needed.
-echo.
+echo [OK] Done!
+echo    Executable : %PROJ%\%EXEC_NAME%
+echo    Desktop    : %USERPROFILE%\Desktop\%APP_NAME%.lnk
+echo    Start Menu : %STARTMENU_DIR%\%APP_NAME%.lnk
 pause
+exit /b 0
