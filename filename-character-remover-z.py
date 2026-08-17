@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from tkinter import font as tkfont
 import os
 import re
 import sys
@@ -314,7 +315,7 @@ THEMES = {
 STRINGS = {
     "en": {
         # window
-        "window_title":        "Filename Character Remover Z - FILENAMES ONLY",
+        "window_title":        "Filename Character Remover Z",
         # warning banner
         "warn1":               "WARNING: THIS TOOL ONLY RENAMES FILENAMES",
         "warn2":               "IT DOES NOT OPEN, READ, OR MODIFY FILE CONTENTS",
@@ -327,8 +328,13 @@ STRINGS = {
         "addext_cb":           "Add extension to files that have no extension:",
         "addext_hint":         "(example: .png  .jpg  .txt - dot optional)",
         # substring row
-        "substr_label":        "Substring to remove:",
-        "substr_hint":         "<- Enter any characters/string (example: []abc123 )",
+        "substr_label":        "Character(s) to remove:",
+        "substr_hint":         "<- Enter the character(s) (example: []abc123 )",
+        # path bar row
+        "path_label":          "Path:",
+        "path_hint":           "Type or paste a folder/file path, then press Enter",
+        "warn_bad_path":       "Invalid Path",
+        "warn_bad_path_msg":   "That path doesn't exist. Please check it and try again.",
         # case row
         "case_cb":             "Case-sensitive matching",
         # buttons
@@ -372,7 +378,7 @@ STRINGS = {
             "This action ONLY renames files - file contents are never touched.\n\n"
             "Continue?"
         ),
-        "note_substr":         "Removing substring: '{s}'",
+        "note_substr":         "Removing characters: '{s}'",
         "note_dolphin":        "Fixing Dolphin/KDE duplicate artefacts",
         "note_addext":         "Adding '{ext}' to {n} extensionless file(s)",
         # result dialog
@@ -388,7 +394,7 @@ STRINGS = {
     },
     "pt": {
         # window
-        "window_title":        "Filename Character Remover Z - SOMENTE NOMES DE ARQUIVO",
+        "window_title":        "Filename Character Remover Z",
         # warning banner
         "warn1":               "AVISO: ESTA FERRAMENTA RENOMEIA APENAS NOMES DE ARQUIVO",
         "warn2":               "ELA NAO ABRE, LE NEM MODIFICA O CONTEUDO DOS ARQUIVOS",
@@ -401,8 +407,13 @@ STRINGS = {
         "addext_cb":           "Adicionar extensao a arquivos sem extensao:",
         "addext_hint":         "(exemplo: .png  .jpg  .txt - ponto opcional)",
         # substring row
-        "substr_label":        "Substring a remover:",
-        "substr_hint":         "<- Digite caracteres/texto (exemplo: []abc123 )",
+        "substr_label":        "Caractere(s) a remover:",
+        "substr_hint":         "<- Digite caractere(s) (exemplo: []abc123 )",
+        # path bar row
+        "path_label":          "Caminho:",
+        "path_hint":           "Digite ou cole um caminho de pasta/arquivo e pressione Enter",
+        "warn_bad_path":       "Caminho Invalido",
+        "warn_bad_path_msg":   "Esse caminho nao existe. Verifique e tente novamente.",
         # case row
         "case_cb":             "Correspondencia com diferenciacao de maiusculas",
         # buttons
@@ -446,7 +457,7 @@ STRINGS = {
             "Esta acao APENAS renomeia arquivos - o conteudo nunca e tocado.\n\n"
             "Continuar?"
         ),
-        "note_substr":         "Removendo substring: '{s}'",
+        "note_substr":         "Removendo caracteres: '{s}'",
         "note_dolphin":        "Corrigindo artefatos duplicados do Dolphin/KDE",
         "note_addext":         "Adicionando '{ext}' a {n} arquivo(s) sem extensao",
         # result dialog
@@ -526,6 +537,7 @@ class CustomCharacterRemover:
         self._cfg_add_ext_enabled = False
         self._cfg_add_ext_value   = ".png"
         self._cfg_case_sensitive  = True
+        self._cfg_char_value      = "[]"
 
         try:
             self.root.tk.call('tk', 'scaling', 1.5)
@@ -540,6 +552,10 @@ class CustomCharacterRemover:
         self.add_ext_entry.delete(0, tk.END)
         self.add_ext_entry.insert(0, self._cfg_add_ext_value)
         self.case_sensitive.set(self._cfg_case_sensitive)
+        self.char_entry.delete(0, tk.END)
+        self.char_entry.insert(0, self._cfg_char_value)
+        if self.last_folder:
+            self.path_var.set(self.last_folder)
         self._update_mode()
         self._apply_lang()
         self._apply_theme()
@@ -564,6 +580,7 @@ class CustomCharacterRemover:
         self._cfg_add_ext_enabled = cfg.getboolean(s, "add_ext_enabled",  fallback=False)
         self._cfg_add_ext_value   = cfg.get       (s, "add_ext_value",    fallback=".png")
         self._cfg_case_sensitive  = cfg.getboolean(s, "case_sensitive",   fallback=True)
+        self._cfg_char_value      = cfg.get       (s, "char_value",       fallback="[]")
 
     def _save_config(self):
         path = _get_config_path()
@@ -576,6 +593,7 @@ class CustomCharacterRemover:
             "add_ext_enabled": str(self.add_ext_enabled.get()),
             "add_ext_value":   self.add_ext_entry.get(),
             "case_sensitive":  str(self.case_sensitive.get()),
+            "char_value":      self.char_entry.get(),
         }
         try:
             with open(path, "w", encoding="utf-8") as f:
@@ -589,7 +607,7 @@ class CustomCharacterRemover:
         never clips widgets (e.g. credits disappearing on Linux with PT-BR).
         Applies every language, measures, keeps the max, then restores.
         """
-        max_w = 960
+        max_w = 1080
         max_h = 0
         original_lang = self.lang
 
@@ -599,7 +617,7 @@ class CustomCharacterRemover:
             self.root.update_idletasks()
             w = self.root.winfo_reqwidth()
             h = self.root.winfo_reqheight()
-            max_w = max(max_w, w)
+            max_w = max(max_w, w, getattr(self, "_min_window_w", 0))
             max_h = max(max_h, h)
 
         self.lang = original_lang
@@ -634,12 +652,12 @@ class CustomCharacterRemover:
         self.warning_frame.pack(fill=tk.X)
 
         # Warning labels packed FIRST so they occupy space before the
-        # corner buttons are placed on top.  wraplength is kept narrow
-        # enough (700 px) that the text never flows under the buttons on
-        # either Windows or Linux regardless of window width.
+        # corner buttons are placed on top.  wraplength for the top (red)
+        # line is wide enough to keep the PT-BR text on a single line,
+        # while staying narrow enough to never flow under the buttons.
         self.lbl_warn1 = tk.Label(self.warning_frame, text="",
                  font=("Arial", 16, "bold"), bg="#E0E0E0", fg="red",
-                 wraplength=700)
+                 wraplength=820)
         self.lbl_warn1.pack()
         self.lbl_warn2 = tk.Label(self.warning_frame, text="",
                  font=("Arial", 11), bg="#E0E0E0", fg="black",
@@ -731,19 +749,33 @@ class CustomCharacterRemover:
         self.char_entry = tk.Entry(self.input_frame, font=("Arial", 12), width=30)
         self.char_entry.pack(side=tk.LEFT, padx=5)
         self.char_entry.insert(0, "[]")
+        self.char_entry.bind("<FocusOut>", lambda e: (self._rescan(), self._save_config()))
+        self.char_entry.bind("<Return>",   lambda e: (self._rescan(), self._save_config()))
         self.lbl_substr_hint = tk.Label(self.input_frame, text="",
                  font=("Arial", 9), fg="gray")
         self.lbl_substr_hint.pack(side=tk.LEFT, padx=5)
 
-        # Case sensitivity
+        # Address bar + Case sensitivity (same row: path entry on the left,
+        # case-sensitive checkbox on the right)
         self.case_sensitive = tk.BooleanVar(value=True)
+        self.path_var = tk.StringVar()
         self.case_frame = tk.Frame(root)
-        self.case_frame.pack(pady=3)
+        self.case_frame.pack(pady=3, padx=20, fill=tk.X)
+
+        self.lbl_path = tk.Label(self.case_frame, text="",
+                 font=("Arial", 11, "bold"))
+        self.lbl_path.pack(side=tk.LEFT, padx=(0, 5))
+        self.path_entry = tk.Entry(self.case_frame, textvariable=self.path_var,
+                                   font=("Arial", 12))
+        self.path_entry.pack(side=tk.LEFT, fill=tk.X, expand=True,
+                             padx=(0, 15))
+        self.path_entry.bind("<Return>", self._on_path_entry_submit)
+
         self.case_cb = tk.Checkbutton(self.case_frame, text="",
                        variable=self.case_sensitive,
                        font=("Arial", 11, "bold"), fg="blue",
                        command=lambda: (self._rescan(), self._save_config()))
-        self.case_cb.pack()
+        self.case_cb.pack(side=tk.LEFT)
 
         # Buttons
         self.btn_frame = tk.Frame(root)
@@ -805,6 +837,22 @@ class CustomCharacterRemover:
         self.root.title(t("window_title"))
         self.lang_btn.config(text=t("lang_btn"))
         self.lbl_warn1.config(text=t("warn1"))
+        # Measure the actual rendered width of this line in its own font
+        # and size wraplength to fit it exactly (+ small buffer), so the
+        # warning always renders on a single line regardless of language,
+        # OS font rendering, or display scaling.
+        warn1_font = tkfont.Font(font=self.lbl_warn1.cget("font"))
+        warn1_text_w = warn1_font.measure(t("warn1"))
+        self.lbl_warn1.config(wraplength=warn1_text_w + 20)
+        # The corner buttons (theme/lang toggle) float on top of this banner
+        # at the top-right via .place(), so they don't factor into the
+        # frame's natural width the way packed widgets do. Since warn1 is
+        # centered, work out the total window width needed so its centered
+        # text never reaches under the buttons, using the buttons' actual
+        # measured width (which itself varies slightly by language).
+        self.root.update_idletasks()
+        corner_w = self.corner_frame.winfo_reqwidth()
+        self._min_window_w = warn1_text_w + 2 * (corner_w + 40)
         self.lbl_warn2.config(text=t("warn2"))
         self.lbl_warn3.config(text=t("warn3"))
         self.lbl_title.config(text=t("app_title"))
@@ -813,6 +861,7 @@ class CustomCharacterRemover:
         self.lbl_addext_hint.config(text=t("addext_hint"))
         self.lbl_substr.config(text=t("substr_label"))
         self.lbl_substr_hint.config(text=t("substr_hint"))
+        self.lbl_path.config(text=t("path_label"))
         self.case_cb.config(text=t("case_cb"))
         self.btn_folder.config(text=t("btn_folder"))
         self.btn_file.config(text=t("btn_file"))
@@ -887,8 +936,15 @@ class CustomCharacterRemover:
             self.char_entry.config(disabledbackground=p["entry_dis_bg"],
                                    disabledforeground=p["entry_dis_fg"])
 
-        # Case frame
+        # Case frame (path bar + case checkbox)
         self.case_frame.config(bg=p["root_bg"])
+        self.lbl_path.config(bg=p["root_bg"], fg=p["substr_fg"])
+        if str(self.path_entry.cget("state")) == "normal":
+            self.path_entry.config(bg=p["entry_bg"], fg=p["entry_fg"],
+                                   insertbackground=p["entry_ins"])
+        else:
+            self.path_entry.config(disabledbackground=p["entry_dis_bg"],
+                                   disabledforeground=p["entry_dis_fg"])
         self.case_cb.config(
             bg=p["root_bg"], fg=p["case_fg"],
             activebackground=p["root_bg"], activeforeground=p["case_fg"],
@@ -1037,29 +1093,24 @@ class CustomCharacterRemover:
     # Actions
     # -----------------------------------------------------------------------
 
-    def select_folder(self):
-        folder = self._pick_folder(self.last_folder)
-        if not folder:
-            return
+    def _load_folder(self, folder):
+        """Common path for loading a folder, whether chosen via the picker
+        dialog or typed/pasted directly into the address bar."""
         self.base_folder  = folder
         self.last_folder  = folder
+        self.path_var.set(folder)
         self._save_config()
         self.status.config(
             text=self._t("status_scanning").format(folder=folder),
             fg=self._sc("info"))
         self.scan_files()
 
-    def select_file(self):
-        initial = self.last_folder if (self.last_folder and
-                                        os.path.isdir(self.last_folder)) else None
-        file_path = filedialog.askopenfilename(
-            title=self._t("btn_file"),
-            initialdir=initial,
-        )
-        if not file_path:
-            return
+    def _load_file(self, file_path):
+        """Common path for loading a single file, whether chosen via the
+        picker dialog or typed/pasted directly into the address bar."""
         # Remember the directory of the selected file
         self.last_folder = os.path.dirname(file_path)
+        self.path_var.set(file_path)
         self._save_config()
 
         self.base_folder = None
@@ -1078,6 +1129,38 @@ class CustomCharacterRemover:
         else:
             self.status.config(text=self._t("status_no_change"),
                                fg=self._sc("success"))
+
+    def select_folder(self):
+        folder = self._pick_folder(self.last_folder)
+        if not folder:
+            return
+        self._load_folder(folder)
+
+    def select_file(self):
+        initial = self.last_folder if (self.last_folder and
+                                        os.path.isdir(self.last_folder)) else None
+        file_path = filedialog.askopenfilename(
+            title=self._t("btn_file"),
+            initialdir=initial,
+        )
+        if not file_path:
+            return
+        self._load_file(file_path)
+
+    def _on_path_entry_submit(self, event=None):
+        """Handle Enter in the address bar: load whatever path was typed
+        or pasted in, as a folder or a single file."""
+        raw = self.path_var.get().strip()
+        if not raw:
+            return
+        path = os.path.expanduser(os.path.expandvars(raw))
+        if os.path.isdir(path):
+            self._load_folder(path)
+        elif os.path.isfile(path):
+            self._load_file(path)
+        else:
+            messagebox.showwarning(self._t("warn_bad_path"),
+                                   self._t("warn_bad_path_msg"))
 
     def scan_files(self):
         if not self.base_folder:
